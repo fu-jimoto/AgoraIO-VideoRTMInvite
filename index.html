@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora Web Sample</title>
+<script src="AgoraRTCSDK-3.0.0.js"></script>
+<script src="agora-rtm-sdk-1.2.0.js"></script>
+<link rel="stylesheet"
+       href="https://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+<style>
+
+.inlineinput div {
+    display: inline;
+}
+
+.center{
+  text-align: center;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-size: 1.4em;
+}
+
+button.ui-btn {
+  font-size: 1.4em;
+}
+
+button.ui-icon-phone {
+  font-size: 1.4em;
+}
+
+input {
+  font-size: 1.4em;
+}
+
+label {
+  font-size: 1.4em;
+}
+
+select {
+  font-size: 1.4em;
+}
+
+p {
+  font-family: "serif";
+  font-size: 1.4em;
+}
+
+</style>
+</head>
+
+<body>
+
+<div data-role="page" id="top">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+<div id="div_join" role="main" class="ui-content">
+<div class="ui-field-contain" >
+<label for="entry_comment">UID:</label>
+<input type="text" id="loginId" size="15" pattern="^[0-9A-Za-z]+$" />
+</div>
+<fieldset class="ui-grid-a">
+<div class="ui-block-a"><button id="login" onclick="login()" class="ui-btn ui-btn-b" style='float: right;width: 200px;'class="btn-l">Login</button></div>
+<div class="ui-block-b"><button id="quit" onclick="quit()" style='width: 200px;'>Quit</button></div>
+</fieldset>
+</div>
+<div data-role="footer">
+<h3>agora.io Video SDK</h3>
+</div>
+</div>
+
+
+<div data-role="page" id="sub1">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+<div id="useradd" class="ui-content" >
+<input id="inviteUid" type="hidden" value="" size="5" style='display: inline; width: 300px;' >
+</div>
+
+<div class="ui-content" >
+<button id="Refresh" class="ui-btn" onclick="refresh()">Refresh</button>
+<button id="Cancel" class="ui-btn" onclick="cancel()">Cancel</button>
+</div>
+
+<div data-role="footer">
+<h3>agora.io Video SDK</h3>
+</div>
+
+</div>
+
+<div data-role="page" id="sub2">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+
+<p id="confirmMsg" class="center">Are you sure?</p>
+<div id="div_join" role="main" class="ui-content">
+<button id="join" class="ui-btn ui-btn-b"  onclick="join()">Join</button>
+<button id="Cancel" class="ui-btn" onclick="cancel()">Cancel</button>
+</div>
+
+
+<div data-role="main" class="ui-content">
+    <div data-role="collapsible">
+    <h4>devices</h4>
+    <ul data-role="listview">
+      <li><a href="#sub2_device">audio</a></li>
+      <li><a href="#sub2_device">video</a></li>
+    </ul>
+    </div>
+  </div>
+
+
+</div>
+
+<div data-role="page" id="sub2_device">
+<div id="div_device" role="main" class="ui-content">
+<div class="select">
+<select id="audioSource" ></select>
+</div>
+<div class="select">
+<select id="videoSource"></select>
+</div>
+<a href="#sub2">return</a>
+</div>
+</div>
+
+<div data-role="page" id="sub3">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+
+<button id="leave" class="btn btn-primary" onclick="leave()" >Leave</button>
+
+<div id="video" style="margin:0 auto;">
+<div id="agora_local" style="float:right;width:210px;height:147px;display:inline-block;"></div>
+</div>
+
+</div>
+
+
+<script language="javascript">
+
+if(!AgoraRTC.checkSystemRequirements()) {
+  alert("Your browser does not support WebRTC!");
+}
+
+/* select Log type */
+// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.NONE);
+// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.ERROR);
+// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.WARNING);
+// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.INFO);  
+// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.DEBUG);
+
+/* simulated data to proof setLogLevel() */
+AgoraRTC.Logger.error('this is error');
+AgoraRTC.Logger.warning('this is warning');
+AgoraRTC.Logger.info('this is info');
+AgoraRTC.Logger.debug('this is debug');
+
+
+var appId ="***";
+var channelRtm = "demo";
+var channelName;
+var client, localStream, camera, microphone, remoteStream;
+var remoteStream1, remoteStream2;
+var map = new Map();
+var ar = new Array();
+ar.length=0;
+var audioSelect = document.querySelector('select#audioSource');
+var videoSelect = document.querySelector('select#videoSource');
+
+var clientRtm, channelRtm, currentMessage;
+var random = Math.floor( Math.random() * 99999 ) + 1;
+var uidRtm;
+var uidRtc;
+
+function refresh(){
+  $('div#useradd').empty();
+  var result = new Promise(function(resolve) {
+    resolve(channelRtm.getMembers());
+  })
+  result.then( function(data){ 
+    for(let i = 0; i < data.length; i++) {
+	var txt;
+        if (data[i]==uidRtm){
+          txt=data[i] + "(you)";
+        }else{
+          txt=data[i];
+        }
+        appendProc(data[i],txt);
+    }
+  } );
+}
+
+function appendProc(str1,str2){
+$('div#useradd').append('<button class="ui-btn ui-icon-phone ui-btn-icon-right" onclick="call(\''+ str1 +'\')">'+ str2 +'</button>');
+}
+
+function reset(){
+  $("#loginId").val("");
+  $('div#useradd').empty();
+  //$('div#video').empty();
+  document.getElementById("leave").disabled = false;
+
+}
+
+
+function cancel(){
+   console.log("Cancel start");
+   logout();
+   reset();
+   $.mobile.changePage('#top', { transition: 'slidedown'});
+   console.log("Cancel complete");
+}
+
+
+function call(memberId){
+  var result = confirm('Do you invite ' + memberId + '?');
+  if(result) {
+    sendChannelMessage2(memberId);
+    $.mobile.changePage('#sub2', { transition: 'slidedown'});
+  }
+}
+
+
+function login(){
+    //Create an Instance and Channel
+    clientRtm = AgoraRTM.createInstance(appId);
+    channelRtm = clientRtm.createChannel(channelRtm);
+
+    //Set a listener to the connection state change
+    clientRtm.on("ConnectionStateChange", function (newState, reason) {
+        console.log("on connection state changed to " + newState + " reason:" + reason);
+    });
+    //Log in the Agora RTM system
+    if ($("#loginId").val() == ""){
+	$("#loginId").val(random);
+    }
+    uidRtm=$("#loginId").val();
+    channelName=uidRtm;
+    
+    console.log("uidRtm:" + uidRtm);
+    clientRtm.login({uid: uidRtm}).then(function(){
+        console.log("AgoraRTM client login success");
+	  channelRtm.join().then(function(){
+	    console.log("AgoraRTM client join success");
+            appendProc(uidRtm,uidRtm + "(you)");
+	    receiveChannelMessage();
+	  }).catch(function (err){
+	    console.log("AgoraRTM client join failure, ", err);
+	  });
+
+    }).catch(function(err){
+        console.log("AgoraRTM client login failure, ", err);
+    });
+   $.mobile.changePage('#sub1', { transition: 'slidedown'});
+
+
+}
+
+function logout(){
+  console.log("RTM Logout start ");
+  channelRtm.leave();
+  clientRtm.logout();
+  console.log("RTM Logout completed ");
+}
+
+function join() {
+
+  var channel_key = null;
+
+  $.mobile.changePage('#sub3', { transition: 'slidedown'});
+
+  console.log("Init AgoraRTC client with App ID: " + appId);
+
+  client = AgoraRTC.createClient({mode: 'rtc'});
+  client.init(appId, function () {
+    console.log("AgoraRTC client initialized");
+    var setUid = null;
+    setUid = $("#loginId").val();
+    //alert(setUid);
+    client.join(channel_key, channelName, setUid, function(uid) {
+      console.log("User " + uid + " join channel successfully");
+      uidRtc = uid;
+      camera = videoSource.value;
+      microphone = audioSource.value;
+      localStream = AgoraRTC.createStream({streamID: uid, audio: true, cameraId: camera, microphoneId: microphone, video: true, screen: false});
+      localStream.setVideoProfile('720p_3');
+
+        // The user has granted access to the camera and mic.
+      localStream.on("accessAllowed", function() {
+        console.log("accessAllowed");
+      });
+
+      // The user has denied access to the camera and mic.
+      localStream.on("accessDenied", function() {
+        console.log("accessDenied");
+      });
+
+      localStream.on("player-status-change", function(evt){
+	 if (evt.isErrorState && evt.state === "paused"){
+	   console.error(`Stream is paused unexpectedly. Trying to resume...`);
+	   localStream.resume().then(function(){
+	   console.log(`Stream is resumed successfully`);
+	 }).catch(function(e){
+	   console.error(`Failed to resume stream. Error ${e.name} Reason ${e.message}`);
+	 });
+      }
+         console.log("uid " + localStream.getId());
+      });
+
+      localStream.init(function() {
+        console.log("getUserMedia successfully");
+        localStream.play('agora_local');
+        client.publish(localStream, function (err) {
+          console.log("Publish local stream error: " + err);
+        });
+
+        client.on('stream-published', function (evt) {
+          console.log("Publish local stream successfully");
+        });
+
+      }, function (err) {
+          console.log("getUserMedia failed", err);
+      });
+    }, function(err) {
+      console.log("Join channel failed", err);
+    });
+  }, function (err) {
+    console.log("AgoraRTC client init failed", err);
+  });
+
+  channelKey = "";
+  client.on('error', function(err) {
+    console.log("Got error msg:", err.reason);
+    if (err.reason === 'DYNAMIC_KEY_TIMEOUT') {
+      client.renewChannelKey(channelKey, function(){
+        console.log("Renew channel key successfully");
+      }, function(err){
+        console.log("Renew channel key failed: ", err);
+      });
+    }
+  });
+
+
+  client.on('stream-added', function (evt) {
+    var stream = evt.stream;
+    console.log("New stream added: " + stream.getId());
+    console.log("Subscribe ", stream);
+    client.subscribe(stream, function (err) {
+      console.log("Subscribe stream failed", err);
+    });
+
+  });
+
+  client.on('stream-subscribed', function (evt) {
+    var stream = evt.stream;
+    console.log("Subscribe remote stream successfully: " + stream.getId());
+    if ($('div#video #agora_remote'+stream.getId()).length === 0) {
+      $('div#video').append('<div id="agora_remote'+stream.getId()+'" style="float:left; width:810px;height:607px;display:inline-block;"></div>');
+    }
+    stream.play('agora_remote' + stream.getId());
+  });
+
+  client.on('stream-removed', function (evt) {
+    var stream = evt.stream;
+    stream.stop();
+    $('#agora_remote' + stream.getId()).remove();
+    console.log("Remote stream is removed " + stream.getId());
+  });
+
+  client.on('peer-leave', function (evt) {
+    var stream = evt.stream;
+    if (stream) {
+      stream.stop();
+      $('#agora_remote' + stream.getId()).remove();
+      console.log(evt.uid + " leaved from this channel");
+    }
+  });
+
+}
+
+function leave() {
+
+  document.getElementById("leave").disabled = true;
+
+  client.leave(function () {
+    console.log("Leave channel successfully");
+  }, function (err) {
+    console.log("Leave channel failed");
+  });
+
+  logout();
+
+  reset();
+
+  $.mobile.changePage('#top', { transition: 'slidedown'});
+
+}
+
+function publish() {
+  document.getElementById("publish").disabled = true;
+  document.getElementById("unpublish").disabled = false;
+  client.publish(localStream, function (err) {
+    console.log("Publish local stream error: " + err);
+  });
+}
+
+function unpublish() {
+  document.getElementById("publish").disabled = false;
+  document.getElementById("unpublish").disabled = true;
+  client.unpublish(localStream, function (err) {
+    console.log("Unpublish local stream failed" + err);
+  });
+}
+
+function getDevices() {
+  AgoraRTC.getDevices(function (devices) {
+    for (var i = 0; i !== devices.length; ++i) {
+      var device = devices[i];
+      var option = document.createElement('option');
+      option.value = device.deviceId;
+      if (device.kind === 'audioinput') {
+        option.text = device.label || 'microphone ' + (audioSelect.length + 1);
+        audioSelect.appendChild(option);
+      } else if (device.kind === 'videoinput') {
+        option.text = device.label || 'camera ' + (videoSelect.length + 1);
+        videoSelect.appendChild(option);
+      } else {
+        console.log('Some other kind of source/device: ', device);
+      }
+    }
+  });
+}
+
+function sendChannelMessage2(memberId){
+    
+    var localMessage = "RequestCall:" + memberId;
+    $("#confirmMsg").text("You invited " + memberId + ".");
+    sendChannelMessage(localMessage);
+}
+
+function sendChannelMessage(msg){
+
+    var localMessage = msg;
+    channelRtm.sendMessage({text:localMessage}).then(function(){
+        console.log("AgoraRTM client succeed in sending channel message: " + localMessage);
+    }).catch(function(err){
+        console.log("AgoraRTM client failed to sending role" + err);
+    });
+
+}
+
+function receiveChannelMessage(){
+
+    channelRtm.on("MemberJoined", memberId => {
+      console.log("MemberJoined: " + memberId);
+      appendProc(memberId,memberId);
+    });
+
+    channelRtm.on("ChannelMessage", function (sentMessage, senderId) {
+        console.log("AgoraRTM client got message: " + JSON.stringify(sentMessage) + " from " + senderId);
+	var msgtxt = sentMessage.text
+	var result = msgtxt.split(':');
+	console.log("msg1 " + result[0]);
+	console.log("msg2 " + result[1]);
+	if (result[0]=="RequestCall"){
+	  if (uidRtm == result[1]){
+            console.log(senderId + "invited you.");
+            $("#confirmMsg").text(senderId + " invited you.");
+            channelName=senderId;
+            $.mobile.changePage('#sub2', { transition: 'slidedown'});
+	  }
+	}
+
+
+    });
+}
+
+getDevices();
+
+</script>
+
+</body>
+</html>
