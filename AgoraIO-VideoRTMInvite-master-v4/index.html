@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora Web Sample</title>
+<script src="AgoraRTC_N-4.3.0.js"></script>
+<script src="agora-rtm-sdk-1.4.1.js"></script>
+<script src="./index.js"></script>
+<link rel="stylesheet"
+       href="https://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+<style>
+
+.inlineinput div {
+    display: inline;
+}
+
+.center{
+  text-align: center;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-size: 1.4em;
+}
+
+button.ui-btn {
+  font-size: 1.4em;
+}
+
+button.ui-icon-phone {
+  font-size: 1.4em;
+}
+
+input {
+  font-size: 1.4em;
+}
+
+label {
+  font-size: 1.4em;
+}
+
+select {
+  font-size: 1.4em;
+}
+
+p {
+  font-family: "serif";
+  font-size: 1.4em;
+}
+
+</style>
+</head>
+
+<body>
+
+<div data-role="page" id="top">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+<div id="div_join" role="main" class="ui-content">
+<div class="ui-field-contain" >
+<label for="entry_comment">UID:</label>
+<input type="text" id="loginId" size="15" pattern="^[0-9A-Za-z]+$" />
+</div>
+<fieldset class="ui-grid-a">
+<div class="ui-block-a"><button id="login" onclick="login()" class="ui-btn ui-btn-b" style='float: right;width: 200px;'class="btn-l">Login</button></div>
+<div class="ui-block-b"><button id="quit" onclick="" style='width: 200px;'>Quit</button></div>
+</fieldset>
+</div>
+<div data-role="footer">
+<h3>agora.io Video SDK</h3>
+</div>
+</div>
+
+
+<div data-role="page" id="sub1">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+<div id="useradd" class="ui-content" >
+<input id="inviteUid" type="hidden" value="" size="5" style='display: inline; width: 300px;' >
+</div>
+
+<div class="ui-content" >
+<button id="Refresh" class="ui-btn" onclick="refresh()">Refresh</button>
+<button id="Cancel" class="ui-btn" onclick="cancel()">Cancel</button>
+</div>
+
+<div data-role="footer">
+<h3>agora.io Video SDK</h3>
+</div>
+
+</div>
+
+<div data-role="page" id="sub2">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+
+<p id="confirmMsg" class="center">Are you sure?</p>
+<div id="div_join" role="main" class="ui-content">
+<button id="join" class="ui-btn ui-btn-b"  onclick="join()">Join</button>
+<button id="Cancel" class="ui-btn" onclick="cancel()">Cancel</button>
+</div>
+
+
+<div data-role="main" class="ui-content">
+    <div data-role="collapsible">
+    <h4>devices</h4>
+    <ul data-role="listview">
+      <li><a href="#sub2_device">select</a></li>
+    </ul>
+    </div>
+  </div>
+
+
+</div>
+
+<div data-role="page" id="sub2_device">
+<div id="div_device" role="main" class="ui-content">
+<div class="select">
+<select id="audioSource" ></select>
+</div>
+<div class="select">
+<select id="videoSource"></select>
+</div>
+<a href="#sub2">return</a>
+</div>
+</div>
+
+<div data-role="page" id="sub3">
+<div data-role="header">
+ <h1>SAMPLE</h1>
+</div>
+
+<button id="leave" class="btn btn-primary" onclick="leave()" >Leave</button>
+
+<div id="video" style="margin:0 auto;">
+<div id="agora_local" style="float:right;width:210px;height:147px;display:inline-block;"></div>
+</div>
+
+</div>
+</body>
+</html>
